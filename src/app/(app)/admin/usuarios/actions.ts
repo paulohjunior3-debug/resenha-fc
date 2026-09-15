@@ -29,6 +29,7 @@ async function exigirAdmin() {
   if (!ehAdmin(profile.role)) {
     throw new Error("Somente o administrador gerencia usuários.");
   }
+  return profile;
 }
 
 export async function cadastrarJogador(_prevState: CadastroState, formData: FormData): Promise<CadastroState> {
@@ -91,6 +92,22 @@ export async function cadastrarJogador(_prevState: CadastroState, formData: Form
   revalidatePath("/jogadores");
 
   return { sucesso: { apelido, senhaTemporaria } };
+}
+
+export async function alterarRole(profileId: string, novoRole: Role) {
+  const quem = await exigirAdmin();
+
+  if (quem.id === profileId) {
+    throw new Error("Você não pode alterar seu próprio papel.");
+  }
+  if (!["player", "moderator", "admin"].includes(novoRole)) {
+    throw new Error("Papel inválido.");
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin.from("profiles").update({ role: novoRole }).eq("id", profileId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin/usuarios");
 }
 
 export async function alterarStatusUsuario(profileId: string, ativo: boolean) {

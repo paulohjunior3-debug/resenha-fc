@@ -5,6 +5,7 @@ import { ConfirmButton } from "@/components/ui/confirm-button";
 import type { Profile } from "@/lib/types/database.types";
 import { alterarStatusUsuario, excluirUsuario } from "./actions";
 import { CadastroForm } from "./cadastro-form";
+import { RoleSelect } from "./role-select";
 
 const ROLE_LABEL: Record<Profile["role"], string> = {
   admin: "Administrador",
@@ -36,20 +37,21 @@ export default async function UsuariosPage() {
         <h2 className="mb-3 font-semibold">Usuários cadastrados</h2>
         <ul className="space-y-2">
           {(usuarios ?? []).map((u) => (
-            <li
-              key={u.id}
-              className="flex items-center justify-between rounded-xl border border-border p-3 text-sm"
-            >
-              <div>
-                <p className="font-medium">
-                  {u.nome} <span className="text-muted">({u.apelido})</span>
-                </p>
-                <p className="text-xs text-muted">
-                  {ROLE_LABEL[u.role]} · {u.ativo ? "ativo" : "inativo"}
-                </p>
+            <li key={u.id} className="rounded-xl border border-border p-3 text-sm">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className="font-medium">
+                    {u.nome} <span className="text-muted">({u.apelido})</span>
+                  </p>
+                  <p className="text-xs text-muted">
+                    {ROLE_LABEL[u.role]} · {u.ativo ? "ativo" : "inativo"}
+                  </p>
+                </div>
+                {admin && u.id !== profile.id && <RoleSelect userId={u.id} roleAtual={u.role} />}
               </div>
+
               {admin && u.role !== "admin" && (
-                <div className="flex gap-2">
+                <div className="mt-2 flex gap-2">
                   <form action={alterarStatusUsuario.bind(null, u.id, !u.ativo)}>
                     <button className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold">
                       {u.ativo ? "Desativar" : "Ativar"}
