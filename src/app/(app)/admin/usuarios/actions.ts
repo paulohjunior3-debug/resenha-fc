@@ -1,12 +1,28 @@
 "use server";
 
+import { randomInt } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getSessionProfile } from "@/lib/auth/session";
-import { ehAdmin, apelidoParaEmailInterno } from "@/lib/auth/roles";
+import { ehAdmin, podeGerenciarOperacional, apelidoParaEmailInterno } from "@/lib/auth/roles";
 import type { Role } from "@/lib/types/database.types";
 
-const SENHA_INICIAL = "1234";
+export interface CadastroState {
+  error?: string;
+  sucesso?: { apelido: string; senhaTemporaria: string };
+}
+
+function gerarSenhaTemporaria(): string {
+  return randomInt(100000, 999999).toString();
+}
+
+async function exigirStaff() {
+  const profile = await getSessionProfile();
+  if (!podeGerenciarOperacional(profile.role)) {
+    throw new Error("Sem permissão para cadastrar jogadores.");
+  }
+  return profile;
+}
 
 async function exigirAdmin() {
   const profile = await getSessionProfile();
@@ -15,30 +31,35 @@ async function exigirAdmin() {
   }
 }
 
-export async function cadastrarJogador(formData: FormData) {
-  await exigirAdmin();
+export async function cadastrarJogador(_prevState: CadastroState, formData: FormData): Promise<CadastroState> {
+  const quemCadastra = await exigirStaff();
 
   const nome = String(formData.get("nome") || "").trim();
   const apelido = String(formData.get("apelido") || "").trim();
-  const role = String(formData.get("role") || "player") as Role;
+  const roleSolicitado = String(formData.get("role") || "player") as Role;
   const ehGoleiro = formData.get("eh_goleiro") === "on";
 
   if (!nome || !apelido) {
-    throw new Error("Informe nome e apelido.");
+    return { error: "Informe nome e apelido." };
   }
-  if (role !== "player" && role !== "moderator") {
-    throw new Error("Papel inválido.");
+  if (roleSolicitado !== "player" && roleSolicitado !== "moderator") {
+    return { error: "Papel inválido." };
   }
+  // Moderador só pode cadastrar jogadores comuns, nunca outro moderador/admin.
+  const role: Role = ehAdmin(quemCadastra.role) ? roleSolicitado : "player";
 
   const admin = createAdminClient();
   const emailInterno = apelidoParaEmailInterno(apelido);
+  const senhaTemporaria = gerarSenhaTemporaria();
 
   const { data: authUser, error: authError } = await admin.auth.admin.createUser({
     email: emailInterno,
-    password: SENHA_INICIAL,
+    password: senhaTemporaria,
     email_confirm: true,
   });
-  if (authError) throw new Error(authError.message);
+  if (authError) {
+    return { error: authError.message };
+  }
 
   const { data: player, error: playerError } = await admin
     .from("players")
@@ -47,7 +68,7 @@ export async function cadastrarJogador(formData: FormData) {
     .single();
   if (playerError) {
     await admin.auth.admin.deleteUser(authUser.user.id);
-    throw new Error(playerError.message);
+    return { error: playerError.message };
   }
 
   await admin.from("player_attributes").insert({ player_id: player.id });
@@ -59,14 +80,17 @@ export async function cadastrarJogador(formData: FormData) {
     email_interno: emailInterno,
     role,
     player_id: player.id,
+    must_change_password: true,
   });
   if (profileError) {
     await admin.auth.admin.deleteUser(authUser.user.id);
-    throw new Error(profileError.message);
+    return { error: profileError.message };
   }
 
   revalidatePath("/admin/usuarios");
   revalidatePath("/jogadores");
+
+  return { sucesso: { apelido, senhaTemporaria } };
 }
 
 export async function alterarStatusUsuario(profileId: string, ativo: boolean) {

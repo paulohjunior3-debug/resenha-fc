@@ -41,7 +41,8 @@ export function BottomNav({ role }: { role: Role }) {
   const pathname = usePathname();
   const [aberto, setAberto] = useState(false);
 
-  const itensMais = role === "admin" ? [...ITENS_MAIS_BASE, ITEM_ADMIN] : ITENS_MAIS_BASE;
+  const itensMais =
+    role === "admin" || role === "moderator" ? [...ITENS_MAIS_BASE, ITEM_ADMIN] : ITENS_MAIS_BASE;
   const maisAtivo = itensMais.some((item) => pathname.startsWith(item.href));
 
   return (

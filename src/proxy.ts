@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 const ROTAS_PUBLICAS = ["/login"];
+const ROTA_TROCAR_SENHA = "/trocar-senha";
 const PREFIXO_ADMIN = "/admin";
 
 // Substitui o antigo middleware.ts (renomeado para proxy.ts a partir do
@@ -47,14 +48,26 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && pathname.startsWith(PREFIXO_ADMIN)) {
+  if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role")
+      .select("role, must_change_password")
       .eq("id", user.id)
       .single();
 
-    if (profile?.role !== "admin") {
+    if (profile?.must_change_password && pathname !== ROTA_TROCAR_SENHA) {
+      const url = request.nextUrl.clone();
+      url.pathname = ROTA_TROCAR_SENHA;
+      return NextResponse.redirect(url);
+    }
+
+    if (!profile?.must_change_password && pathname === ROTA_TROCAR_SENHA) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard";
+      return NextResponse.redirect(url);
+    }
+
+    if (pathname.startsWith(PREFIXO_ADMIN) && !["admin", "moderator"].includes(profile?.role ?? "")) {
       const url = request.nextUrl.clone();
       url.pathname = "/dashboard";
       return NextResponse.redirect(url);

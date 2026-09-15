@@ -19,6 +19,7 @@ export interface Profile {
   role: Role;
   player_id: string | null;
   ativo: boolean;
+  must_change_password: boolean;
   created_at: string;
 }
 
