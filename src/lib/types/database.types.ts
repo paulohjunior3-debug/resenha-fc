@@ -20,6 +20,7 @@ export interface Profile {
   player_id: string | null;
   ativo: boolean;
   must_change_password: boolean;
+  senha_temporaria: string | null;
   created_at: string;
 }
 

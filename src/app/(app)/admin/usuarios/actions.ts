@@ -82,6 +82,7 @@ export async function cadastrarJogador(_prevState: CadastroState, formData: Form
     role,
     player_id: player.id,
     must_change_password: true,
+    senha_temporaria: senhaTemporaria,
   });
   if (profileError) {
     await admin.auth.admin.deleteUser(authUser.user.id);

@@ -46,6 +46,14 @@ export default async function UsuariosPage() {
                   <p className="text-xs text-muted">
                     {ROLE_LABEL[u.role]} · {u.ativo ? "ativo" : "inativo"}
                   </p>
+                  {admin && u.senha_temporaria && (
+                    <p className="mt-1 text-xs">
+                      Senha temporária:{" "}
+                      <span className="font-mono font-bold tracking-widest text-primary">
+                        {u.senha_temporaria}
+                      </span>
+                    </p>
+                  )}
                 </div>
                 {admin && u.id !== profile.id && <RoleSelect userId={u.id} roleAtual={u.role} />}
               </div>
