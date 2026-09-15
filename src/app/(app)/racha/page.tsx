@@ -121,7 +121,7 @@ export default async function RachaPage() {
               )}
             </div>
 
-            {match.status === "aberta" && !ehStaff && (
+            {match.status === "aberta" && profile.player_id && (
               <div className="mt-3">
                 {minhaLinha ? (
                   <form action={desistirPresenca.bind(null, match.id)}>
