@@ -100,3 +100,33 @@ export async function alterarStatusUsuario(profileId: string, ativo: boolean) {
   if (error) throw new Error(error.message);
   revalidatePath("/admin/usuarios");
 }
+
+// Apaga a conta (login) e o cadastro de jogador ligado a ela — inclui
+// histórico de presenças, gols e ranking desse jogador. Irreversível.
+export async function excluirUsuario(profileId: string) {
+  await exigirAdmin();
+  const admin = createAdminClient();
+
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("player_id, role")
+    .eq("id", profileId)
+    .maybeSingle<{ player_id: string | null; role: string }>();
+
+  if (profile?.role === "admin") {
+    throw new Error("Não é possível excluir uma conta de administrador por aqui.");
+  }
+
+  const { error: authError } = await admin.auth.admin.deleteUser(profileId);
+  if (authError) throw new Error(authError.message);
+
+  if (profile?.player_id) {
+    await admin.from("players").delete().eq("id", profile.player_id);
+  }
+
+  revalidatePath("/admin/usuarios");
+  revalidatePath("/jogadores");
+  revalidatePath("/racha");
+  revalidatePath("/ranking");
+  revalidatePath("/caixa");
+}

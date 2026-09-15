@@ -1,8 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { getSessionProfile } from "@/lib/auth/session";
 import { ehAdmin } from "@/lib/auth/roles";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 import type { Profile } from "@/lib/types/database.types";
-import { alterarStatusUsuario } from "./actions";
+import { alterarStatusUsuario, excluirUsuario } from "./actions";
 import { CadastroForm } from "./cadastro-form";
 
 const ROLE_LABEL: Record<Profile["role"], string> = {
@@ -48,11 +49,21 @@ export default async function UsuariosPage() {
                 </p>
               </div>
               {admin && u.role !== "admin" && (
-                <form action={alterarStatusUsuario.bind(null, u.id, !u.ativo)}>
-                  <button className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold">
-                    {u.ativo ? "Desativar" : "Ativar"}
-                  </button>
-                </form>
+                <div className="flex gap-2">
+                  <form action={alterarStatusUsuario.bind(null, u.id, !u.ativo)}>
+                    <button className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold">
+                      {u.ativo ? "Desativar" : "Ativar"}
+                    </button>
+                  </form>
+                  <form action={excluirUsuario.bind(null, u.id)}>
+                    <ConfirmButton
+                      confirmMessage={`Excluir ${u.apelido} definitivamente? Isso apaga o login e todo o histórico dele (presenças, gols, ranking). Não pode ser desfeito.`}
+                      className="rounded-lg border border-danger/30 px-3 py-1.5 text-xs font-semibold text-danger"
+                    >
+                      Excluir
+                    </ConfirmButton>
+                  </form>
+                </div>
               )}
             </li>
           ))}
