@@ -35,6 +35,36 @@ export async function criarRacha(formData: FormData) {
   revalidatePath("/racha");
 }
 
+export async function editarRacha(matchId: string, formData: FormData) {
+  await exigirStaff();
+  const supabase = await createClient();
+
+  const data = String(formData.get("data") || "");
+  const valorTotal = Number(formData.get("valor_total") || 0);
+
+  if (!data || valorTotal < 0) {
+    throw new Error("Informe uma data e um valor válido.");
+  }
+
+  const { error } = await supabase.rpc("editar_racha", {
+    p_match_id: matchId,
+    p_data: data,
+    p_valor_total: valorTotal,
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath("/racha");
+  revalidatePath("/dashboard");
+}
+
+export async function excluirRacha(matchId: string) {
+  await exigirStaff();
+  const supabase = await createClient();
+  const { error } = await supabase.from("matches").delete().eq("id", matchId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/racha");
+  revalidatePath("/dashboard");
+}
+
 export async function abrirLista(matchId: string) {
   await exigirStaff();
   const supabase = await createClient();

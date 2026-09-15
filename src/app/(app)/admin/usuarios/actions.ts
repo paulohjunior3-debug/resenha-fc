@@ -42,7 +42,7 @@ export async function cadastrarJogador(_prevState: CadastroState, formData: Form
   if (!nome || !apelido) {
     return { error: "Informe nome e apelido." };
   }
-  if (roleSolicitado !== "player" && roleSolicitado !== "moderator") {
+  if (!["player", "moderator", "admin"].includes(roleSolicitado)) {
     return { error: "Papel inválido." };
   }
   // Moderador só pode cadastrar jogadores comuns, nunca outro moderador/admin.

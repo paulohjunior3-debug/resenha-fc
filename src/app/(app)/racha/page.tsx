@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getSessionProfile } from "@/lib/auth/session";
 import { podeGerenciarOperacional } from "@/lib/auth/roles";
 import { Avatar } from "@/components/ui/avatar";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 import type { Match, MatchPlayer, Player } from "@/lib/types/database.types";
 import {
   abrirLista,
@@ -9,6 +10,8 @@ import {
   confirmarPresenca,
   criarRacha,
   desistirPresenca,
+  editarRacha,
+  excluirRacha,
   finalizarLista,
   reabrirLista,
   registrarPagamento,
@@ -96,6 +99,46 @@ export default async function RachaPage() {
                 </h2>
                 <p className="text-sm text-muted">{STATUS_LABEL[match.status]}</p>
                 <p className="text-sm">Valor total: R$ {Number(match.valor_total).toFixed(2)}</p>
+
+                {ehStaff && (
+                  <details className="mt-2">
+                    <summary className="cursor-pointer text-xs font-medium text-primary">
+                      Editar data/valor
+                    </summary>
+                    <form
+                      action={editarRacha.bind(null, match.id)}
+                      className="mt-2 flex flex-wrap items-end gap-2"
+                    >
+                      <input
+                        type="date"
+                        name="data"
+                        defaultValue={match.data}
+                        required
+                        className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                      />
+                      <input
+                        type="number"
+                        name="valor_total"
+                        step="0.01"
+                        min="0"
+                        defaultValue={match.valor_total}
+                        required
+                        className="w-28 rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                      />
+                      <button className="rounded-lg border border-border px-3 py-2 text-sm font-semibold">
+                        Salvar
+                      </button>
+                    </form>
+                    <form action={excluirRacha.bind(null, match.id)} className="mt-2">
+                      <ConfirmButton
+                        confirmMessage="Excluir este racha inteiro? Isso apaga a lista, confirmações e pagamentos dele. Não pode ser desfeito."
+                        className="text-xs font-medium text-danger underline"
+                      >
+                        Excluir este racha
+                      </ConfirmButton>
+                    </form>
+                  </details>
+                )}
               </div>
               {ehStaff && (
                 <div className="flex flex-col gap-2">
