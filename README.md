@@ -125,6 +125,7 @@ A especificação original deixava alguns pontos de negócio em aberto — decis
 - **Fila e suplência via função de banco, não via frontend.** `confirmar_presenca`/`desistir_presenca` rodam com `SECURITY DEFINER` para serem atômicas: a checagem de vaga disponível e a escrita acontecem na mesma transação.
 - **Pontuação e classificação centralizadas.** Pesos e faixas ficam em [`lib/business/scoring.ts`](src/lib/business/scoring.ts) e [`classification.ts`](src/lib/business/classification.ts) — ajustar o peso de um gol não exige tocar em nenhuma tela.
 - **`proxy.ts` em vez de `middleware.ts`.** No Next.js 16 o arquivo de middleware foi renomeado para Proxy — a guarda de sessão e RBAC por rota vive em [`src/proxy.ts`](src/proxy.ts).
+- **Senha temporária em vez de "1234" fixo.** O Supabase Auth exige mínimo de 6 caracteres, então o cadastro gera uma senha de 6 dígitos exibida uma única vez pra quem cadastrou; o `proxy.ts` obriga o jogador a criar sua própria senha em `/trocar-senha` antes de acessar qualquer outra tela.
 
 ## Estrutura de pastas
 
@@ -159,13 +160,14 @@ cp .env.example .env.local   # preencha com as chaves do seu projeto Supabase
 npm run dev
 ```
 
-1. Crie um projeto gratuito em [supabase.com](https://supabase.com) e rode os arquivos de `supabase/migrations/` em ordem (0001 → 0004) no **SQL Editor**.
+1. Crie um projeto gratuito em [supabase.com](https://supabase.com) e rode os arquivos de `supabase/migrations/` em ordem numérica no **SQL Editor**.
 2. Copie `Project URL`, `anon public key` e `service_role key` (Project Settings > API) para `.env.local`.
 3. Crie o primeiro administrador (não há autocadastro):
    ```bash
    node --env-file=.env.local scripts/create-admin.mjs "Seu Nome" "seuapelido"
    ```
-4. Acesse `http://localhost:3000` — login com o apelido criado e senha `1234`.
+   O comando imprime uma senha temporária de 6 dígitos — no primeiro login o app pede pra trocar por uma senha definitiva.
+4. Acesse `http://localhost:3000` e faça login com o apelido e a senha temporária.
 
 ## Status do MVP
 

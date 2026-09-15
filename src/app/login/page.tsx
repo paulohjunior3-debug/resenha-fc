@@ -52,7 +52,7 @@ export default function LoginPage() {
               autoComplete="current-password"
               required
               className="w-full rounded-lg border border-border bg-background px-4 py-3 text-base outline-none focus:border-primary"
-              placeholder="Senha inicial: 1234"
+              placeholder="Sua senha"
             />
           </div>
 
