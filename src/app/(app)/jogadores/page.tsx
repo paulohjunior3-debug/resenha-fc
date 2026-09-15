@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { Avatar } from "@/components/ui/avatar";
 import type { Player } from "@/lib/types/database.types";
 
 const NIVEL_COR: Record<Player["classificacao"], string> = {
@@ -30,9 +31,12 @@ export default async function JogadoresPage() {
               href={`/jogadores/${j.id}`}
               className="flex items-center justify-between rounded-xl border border-border bg-surface p-3"
             >
-              <div>
-                <p className="font-medium">{j.apelido}</p>
-                <p className="text-xs text-muted">{j.eh_goleiro ? "Goleiro" : j.posicao}</p>
+              <div className="flex items-center gap-3">
+                <Avatar src={j.avatar_url} alt={j.apelido} size={40} />
+                <div>
+                  <p className="font-medium">{j.apelido}</p>
+                  <p className="text-xs text-muted">{j.eh_goleiro ? "Goleiro" : j.posicao}</p>
+                </div>
               </div>
               <span className={`rounded-full px-3 py-1 text-sm font-bold ${NIVEL_COR[j.classificacao]}`}>
                 {j.classificacao}

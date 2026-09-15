@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionProfile } from "@/lib/auth/session";
 import { ehAdmin, podeGerenciarOperacional } from "@/lib/auth/roles";
+import { Avatar } from "@/components/ui/avatar";
 import type { MatchPlayer, Player, PlayerAttributes, Prize, Ranking } from "@/lib/types/database.types";
 import { atualizarAtributos, marcarPremioUtilizado } from "./actions";
 
@@ -61,8 +62,8 @@ export default async function JogadorDetalhePage({ params }: PageProps<"/jogador
   return (
     <div className="space-y-4">
       <section className="rounded-2xl border border-border bg-surface p-4 text-center">
-        <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground">
-          {jogador.apelido.slice(0, 2).toUpperCase()}
+        <div className="mx-auto mb-2 w-fit">
+          <Avatar src={jogador.avatar_url} alt={jogador.apelido} size={72} />
         </div>
         <h1 className="text-lg font-bold">{jogador.apelido}</h1>
         <p className="text-sm text-muted">{jogador.nome}</p>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionProfile } from "@/lib/auth/session";
 import type { Player, PlayerAttributes, Prize, Ranking } from "@/lib/types/database.types";
+import { PhotoForm } from "./photo-form";
 
 type PremioComRanking = Prize & { rankings: Pick<Ranking, "periodo"> };
 
@@ -39,10 +40,8 @@ export default async function PerfilPage() {
   return (
     <div className="space-y-4">
       <section className="rounded-2xl border border-border bg-surface p-4 text-center">
-        <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground">
-          {jogador.apelido.slice(0, 2).toUpperCase()}
-        </div>
-        <h1 className="text-lg font-bold">{jogador.apelido}</h1>
+        <PhotoForm avatarUrl={jogador.avatar_url} apelido={jogador.apelido} />
+        <h1 className="mt-2 text-lg font-bold">{jogador.apelido}</h1>
         <p className="text-sm text-muted">{jogador.nome}</p>
         <p className="mt-1 text-sm">
           {jogador.eh_goleiro ? "Goleiro" : jogador.posicao} · Classificação{" "}

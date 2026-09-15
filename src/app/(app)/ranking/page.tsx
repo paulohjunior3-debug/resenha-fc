@@ -1,16 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { getSessionProfile } from "@/lib/auth/session";
 import { ehAdmin } from "@/lib/auth/roles";
+import { Podium, type PodiumEntry } from "@/components/ranking/podium";
 import type { Player, Ranking, RankingResult } from "@/lib/types/database.types";
 import { finalizarRanking, iniciarRanking } from "./actions";
 
-type ResultadoComJogador = RankingResult & { players: Pick<Player, "apelido"> };
-
-const MEDALHA: Record<number, { emoji: string; cor: string }> = {
-  1: { emoji: "🥇", cor: "text-gold" },
-  2: { emoji: "🥈", cor: "text-silver" },
-  3: { emoji: "🥉", cor: "text-bronze" },
-};
+type ResultadoComJogador = RankingResult & { players: Pick<Player, "apelido" | "avatar_url"> };
 
 export default async function RankingPage() {
   const profile = await getSessionProfile();
@@ -29,11 +24,16 @@ export default async function RankingPage() {
   const { data: resultados } = atual
     ? await supabase
         .from("ranking_results")
-        .select("*, players(apelido)")
+        .select("*, players(apelido, avatar_url)")
         .eq("ranking_id", atual.id)
         .order("posicao", { ascending: true, nullsFirst: false })
         .returns<ResultadoComJogador[]>()
     : { data: null };
+
+  const top3: (PodiumEntry | null)[] = [0, 1, 2].map((i) => {
+    const r = (resultados ?? [])[i];
+    return r ? { apelido: r.players.apelido, avatarUrl: r.players.avatar_url, pontuacao: Number(r.pontuacao) } : null;
+  });
 
   return (
     <div className="space-y-4">
@@ -74,46 +74,39 @@ export default async function RankingPage() {
         </section>
       )}
 
-      {!atual && <p className="text-sm text-muted">Nenhum ranking iniciado ainda.</p>}
+      <section className="rounded-2xl border border-border bg-surface p-4">
+        <h2 className="mb-1 text-center font-semibold">
+          {atual ? `Pódio — ${atual.periodo}` : "Pódio do mês"}
+        </h2>
+        <p className="mb-2 text-center text-xs text-muted">
+          {atual
+            ? atual.finalizado
+              ? "Período finalizado"
+              : "Em andamento — o pódio fecha quando o admin finalizar o período"
+            : "Nenhum ranking iniciado ainda"}
+        </p>
+        <Podium entradas={top3} />
+      </section>
 
-      {atual && (
+      {atual && (resultados ?? []).length > 0 && (
         <section className="rounded-2xl border border-border bg-surface p-4">
-          <h2 className="mb-1 font-semibold">
-            Período {atual.periodo} {atual.finalizado ? "(finalizado)" : "(em andamento)"}
-          </h2>
-
-          {(resultados ?? []).length === 0 ? (
-            <p className="mt-2 text-sm text-muted">Ainda sem estatísticas registradas.</p>
-          ) : (
-            <>
-              <div className="mt-4 mb-4 flex items-end justify-center gap-3">
-                {(resultados ?? []).slice(0, 3).map((r, i) => (
-                  <div key={r.id} className="text-center">
-                    <p className={`text-3xl ${MEDALHA[i + 1]?.cor}`}>{MEDALHA[i + 1]?.emoji}</p>
-                    <p className="text-sm font-semibold">{r.players.apelido}</p>
-                    <p className="text-xs text-muted">{r.pontuacao} pts</p>
-                  </div>
-                ))}
-              </div>
-
-              <ol className="space-y-2">
-                {(resultados ?? []).map((r, i) => (
-                  <li
-                    key={r.id}
-                    className="flex items-center justify-between rounded-xl border border-border p-3 text-sm"
-                  >
-                    <span>
-                      {i + 1}º {r.players.apelido}
-                    </span>
-                    <span className="text-muted">
-                      {r.gols}G · {r.assistencias}A · {r.presencas}P ·{" "}
-                      <strong className="text-foreground">{r.pontuacao} pts</strong>
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            </>
-          )}
+          <h2 className="mb-3 font-semibold">Classificação completa</h2>
+          <ol className="space-y-2">
+            {(resultados ?? []).map((r, i) => (
+              <li
+                key={r.id}
+                className="flex items-center justify-between rounded-xl border border-border p-3 text-sm"
+              >
+                <span>
+                  {i + 1}º {r.players.apelido}
+                </span>
+                <span className="text-muted">
+                  {r.gols}G · {r.assistencias}A · {r.presencas}P ·{" "}
+                  <strong className="text-foreground">{r.pontuacao} pts</strong>
+                </span>
+              </li>
+            ))}
+          </ol>
         </section>
       )}
 

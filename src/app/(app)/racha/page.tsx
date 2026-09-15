@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getSessionProfile } from "@/lib/auth/session";
 import { podeGerenciarOperacional } from "@/lib/auth/roles";
+import { Avatar } from "@/components/ui/avatar";
 import type { Match, MatchPlayer, Player } from "@/lib/types/database.types";
 import {
   abrirLista,
@@ -13,7 +14,9 @@ import {
   registrarPagamento,
 } from "./actions";
 
-type MatchPlayerComJogador = MatchPlayer & { players: Pick<Player, "nome" | "apelido" | "eh_goleiro"> };
+type MatchPlayerComJogador = MatchPlayer & {
+  players: Pick<Player, "nome" | "apelido" | "eh_goleiro" | "avatar_url">;
+};
 
 const STATUS_LABEL: Record<Match["status"], string> = {
   fechada: "Fechada (ainda não aberta)",
@@ -36,7 +39,7 @@ export default async function RachaPage() {
   const { data: lista } = match
     ? await supabase
         .from("match_players")
-        .select("*, players(nome, apelido, eh_goleiro)")
+        .select("*, players(nome, apelido, eh_goleiro, avatar_url)")
         .eq("match_id", match.id)
         .eq("status", "confirmado")
         .order("tipo_vaga", { ascending: false })
@@ -175,16 +178,19 @@ function ListaJogadores({
         {itens.map((mp) => (
           <li key={mp.id} className="rounded-xl border border-border p-3">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">
-                  {mp.posicao_lista}. {mp.players.apelido}{" "}
-                  {mp.players.eh_goleiro && <span className="text-xs text-muted">(goleiro)</span>}
-                </p>
-                <p className="text-xs text-muted">
-                  {mp.players.eh_goleiro
-                    ? "Não paga"
-                    : `Deve: R$ ${Number(mp.valor_devido ?? 0).toFixed(2)}`}
-                </p>
+              <div className="flex items-center gap-3">
+                <Avatar src={mp.players.avatar_url} alt={mp.players.apelido} size={40} />
+                <div>
+                  <p className="font-medium">
+                    {mp.posicao_lista}. {mp.players.apelido}{" "}
+                    {mp.players.eh_goleiro && <span className="text-xs text-muted">(goleiro)</span>}
+                  </p>
+                  <p className="text-xs text-muted">
+                    {mp.players.eh_goleiro
+                      ? "Não paga"
+                      : `Deve: R$ ${Number(mp.valor_devido ?? 0).toFixed(2)}`}
+                  </p>
+                </div>
               </div>
               {!mp.players.eh_goleiro && (
                 <span
